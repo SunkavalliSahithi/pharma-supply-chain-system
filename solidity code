@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract PharmaSupplyChain {
+
+    struct Drug {
+        uint id;
+        string name;
+        string manufacturer;
+        uint manufactureDate;
+        uint expiryDate;
+        address currentOwner;
+        bool isDistributed;
+    }
+
+    mapping(uint => Drug) public drugs;
+    uint public drugCounter;
+
+    event DrugAdded(uint id, string name, string manufacturer);
+    event OwnershipTransferred(uint id, address from, address to);
+    event DrugDistributed(uint id);
+
+    function addDrug(string memory _name, string memory _manufacturer, uint _manufactureDate, uint _expiryDate) public {
+        drugCounter++;
+        drugs[drugCounter] = Drug(drugCounter, _name, _manufacturer, _manufactureDate, _expiryDate, msg.sender, false);
+        emit DrugAdded(drugCounter, _name, _manufacturer);
+    }
+
+    function transferOwnership(uint _id, address _newOwner) public {
+        require(drugs[_id].currentOwner == msg.sender, "You are not the owner of this drug");
+        drugs[_id].currentOwner = _newOwner;
+        emit OwnershipTransferred(_id, msg.sender, _newOwner);
+    }
+
+    function distributeDrug(uint _id) public {
+        require(drugs[_id].currentOwner == msg.sender, "You are not the owner of this drug");
+        require(!drugs[_id].isDistributed, "Drug has already been distributed");
+        drugs[_id].isDistributed = true;
+        emit DrugDistributed(_id);
+    }
+
+    function getDrugDetails(uint _id) public view returns (string memory, string memory, uint, uint, address, bool) {
+        Drug memory d = drugs[_id];
+        return (d.name, d.manufacturer, d.manufactureDate, d.expiryDate, d.currentOwner, d.isDistributed);
+    }
+}
